@@ -1,0 +1,24 @@
+name: nexus testnet node
+
+on:
+  workflow_dispatch:
+
+jobs:
+  run-node:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Run Nexus Testnet Node
+        run: |
+          echo "🚀 Starting Nexus Testnet Node..."
+          echo "Node ID: 25642744"
+          echo "🕒 Node will simulate running for 6 hours"
+          sleep 21600
+          echo "✅ Node run complete!"
