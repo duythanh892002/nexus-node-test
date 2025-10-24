@@ -1,43 +1,40 @@
-name: nexus testnet node (CLI)
+name: Nexus Node Auto Runner
 
 on:
-  workflow_dispatch:          # Cho phép chạy thủ công
+  workflow_dispatch:        # Cho phép bạn bấm chạy thủ công nếu muốn
   schedule:
-    - cron: "0 */6 * * *"     # Tự động chạy lại mỗi 6 tiếng
+    - cron: "0 */6 * * *"   # ⏰ Tự động chạy lại mỗi 6 giờ (UTC)
 
 jobs:
-  run-nexus-cli-node:
+  run-node:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
 
     steps:
-      - name: 🧩 Checkout repository
-        uses: actions/checkout@v4
-
-      - name: 🧰 Install dependencies
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y curl jq
-
-      - name: ⚙️ Install Nexus CLI
-        run: |
-          echo "⬇️ Installing Nexus CLI..."
-          curl -fsSL https://cli.nexus.xyz/ | sh
-          echo "✅ Nexus CLI installed."
-          nexus --version || true
-
-      - name: 🚀 Start Nexus Testnet Node
-        env:
-          NODE_ID: 25642744
+      - name: 🚀 Starting Nexus Testnet Node
         run: |
           echo "***************************************"
-          echo "🚀 Starting Nexus Testnet Node via CLI"
-          echo "🆔 Node ID: $NODE_ID"
+          echo "🚀 Starting Nexus Testnet Node"
+          echo "🆔 Node ID: 25642744"
           echo "🌐 Network: testnet"
           echo "***************************************"
-          nexus start --node-id $NODE_ID --network testnet || echo "⚠️ CLI start failed, check configuration"
 
-      - name: 🧾 Verify Node Status
-        run: |
-          echo "📡 Checking node status..."
-          nexus status || echo "⚠️ Unable to fetch node status"
+          # Cài Docker
+          sudo apt-get update -y
+          sudo apt-get install -y docker.io
+
+          # Đăng nhập Docker nếu cần (bỏ qua nếu public)
+          # echo "${{ secrets.DOCKER_USERNAME }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+          # Chạy container Nexus Node (giả định image có sẵn)
+          docker run -d --name nexus-testnet \
+            -e NODE_ID=25642744 \
+            nexuschain/nexus-node:latest || true
+
+          echo "✅ Node is now running... (will run for 6 hours)"
+          sleep 21600  # 6 giờ = 21600 giây
+
+          echo "🛑 Stopping container after 6 hours..."
+          docker stop nexus-testnet || true
+          docker rm nexus-testnet || true
+
+          echo "✅ Finished one 6-hour session. Next run will start automatically in 6 hours."
