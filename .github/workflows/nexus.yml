@@ -1,42 +1,43 @@
-name: nexus testnet node
+name: nexus testnet node (CLI)
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:          # Cho phép chạy thủ công
   schedule:
-    - cron: "0 */6 * * *"  # Tự chạy mỗi 6 tiếng
+    - cron: "0 */6 * * *"     # Tự động chạy lại mỗi 6 tiếng
 
 jobs:
-  run-node:
+  run-nexus-cli-node:
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
     steps:
-      - name: 🧩 Checkout
+      - name: 🧩 Checkout repository
         uses: actions/checkout@v4
 
-      - name: 🐳 Setup Docker
-        uses: docker/setup-buildx-action@v3
-
-      - name: 📦 Clone Nexus Node source
+      - name: 🧰 Install dependencies
         run: |
-          echo "🔄 Cloning Nexus Node source..."
-          git clone https://github.com/arcxteam/nexus-node.git
-          cd nexus-node
-          echo "✅ Repo cloned"
+          sudo apt-get update -y
+          sudo apt-get install -y curl jq
 
-      - name: 🏗️ Build Docker Image
+      - name: ⚙️ Install Nexus CLI
         run: |
-          cd nexus-node
-          docker build -t nexus-node:latest .
+          echo "⬇️ Installing Nexus CLI..."
+          curl -fsSL https://cli.nexus.xyz/ | sh
+          echo "✅ Nexus CLI installed."
+          nexus --version || true
 
-      - name: 🚀 Run Nexus Node Testnet
+      - name: 🚀 Start Nexus Testnet Node
         env:
           NODE_ID: 25642744
         run: |
           echo "***************************************"
-          echo "🚀 Starting Nexus Testnet Node"
+          echo "🚀 Starting Nexus Testnet Node via CLI"
           echo "🆔 Node ID: $NODE_ID"
           echo "🌐 Network: testnet"
           echo "***************************************"
-          cd nexus-node
-          docker run --rm -e NODE_ID=$NODE_ID nexus-node:latest
+          nexus start --node-id $NODE_ID --network testnet || echo "⚠️ CLI start failed, check configuration"
+
+      - name: 🧾 Verify Node Status
+        run: |
+          echo "📡 Checking node status..."
+          nexus status || echo "⚠️ Unable to fetch node status"
