@@ -1,22 +1,35 @@
 name: nexus testnet node
 
 on:
-  workflow_dispatch:   # Cho phép chạy thủ công
+  workflow_dispatch:
   schedule:
     - cron: "0 */6 * * *"  # Tự chạy mỗi 6 tiếng
 
 jobs:
   run-node:
     runs-on: ubuntu-latest
-    timeout-minutes: 30  # Giới hạn chạy tối đa 30 phút
+    timeout-minutes: 60
+
     steps:
-      - name: 🧩 Checkout repository
+      - name: 🧩 Checkout
         uses: actions/checkout@v4
 
       - name: 🐳 Setup Docker
         uses: docker/setup-buildx-action@v3
 
-      - name: 🚀 Run Nexus Testnet Node
+      - name: 📦 Clone Nexus Node source
+        run: |
+          echo "🔄 Cloning Nexus Node source..."
+          git clone https://github.com/arcxteam/nexus-node.git
+          cd nexus-node
+          echo "✅ Repo cloned"
+
+      - name: 🏗️ Build Docker Image
+        run: |
+          cd nexus-node
+          docker build -t nexus-node:latest .
+
+      - name: 🚀 Run Nexus Node Testnet
         env:
           NODE_ID: 25642744
         run: |
@@ -25,6 +38,5 @@ jobs:
           echo "🆔 Node ID: $NODE_ID"
           echo "🌐 Network: testnet"
           echo "***************************************"
-
-          docker pull nexuschain/nexus-node:latest || echo "⚠️ Failed to pull image"
-          docker run --rm -e NODE_ID=$NODE_ID nexuschain/nexus-node:latest
+          cd nexus-node
+          docker run --rm -e NODE_ID=$NODE_ID nexus-node:latest
